@@ -1,0 +1,13 @@
+wandb: ERROR api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+Traceback (most recent call last):
+  File "train.py", line 50, in <module>
+    from utils.loggers import Loggers
+  File "/home/lg/tph-yolov5-main/utils/loggers/__init__.py", line 27, in <module>
+    wandb_login_success = wandb.login(timeout=30)
+  File "/home/lg/miniconda3/envs/yolo/lib/python3.7/site-packages/wandb/sdk/wandb_login.py", line 76, in login
+    configured = _login(**kwargs)
+  File "/home/lg/miniconda3/envs/yolo/lib/python3.7/site-packages/wandb/sdk/wandb_login.py", line 297, in _login
+    wlogin.prompt_api_key()
+  File "/home/lg/miniconda3/envs/yolo/lib/python3.7/site-packages/wandb/sdk/wandb_login.py", line 227, in prompt_api_key
+    raise UsageError("api_key not configured (no-tty). call " + directive)
+wandb.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])

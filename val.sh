@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=2 python val2.py --weights ./weights/yolov5l-xs-1.pt --img 1996 --data ./data/VisDrone.yaml --augment --save-txt  --save-conf --task val --batch-size 8 --verbose --name v5l-xs

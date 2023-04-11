@@ -1,0 +1,74 @@
+# YOLOv5 馃殌 by Ultralytics, GPL-3.0 license
+
+# Parameters
+nc: 80  # number of classes
+depth_multiple: 1.0  # model depth multiple 鎺у埗妯″瀷鐨勬繁搴︼紙BottleneckCSP涓暟锛?
+width_multiple: 1.0  # layer channel multiple 鎺у埗Conv閫氶亾channel涓暟锛堝嵎绉牳鏁伴噺锛?
+# depth_multiple琛ㄧずBottleneckCSP妯″潡鐨勭缉鏀惧洜瀛愶紝灏嗘墍鏈塀ottleneckCSP妯″潡鐨凚ottleneck涔樹笂璇ュ弬鏁板緱鍒版渶缁堜釜鏁般€?
+# width_multiple琛ㄧず鍗风Н閫氶亾鐨勭缉鏀惧洜瀛愶紝灏辨槸灏嗛厤缃噷闈㈢殑backbone鍜宧ead閮ㄥ垎鏈夊叧Conv閫氶亾鐨勮缃紝鍏ㄩ儴涔樹互璇ョ郴鏁般€?
+# 閫氳繃杩欎袱涓弬鏁板氨鍙互瀹炵幇涓嶅悓澶嶆潅搴︾殑妯″瀷璁捐銆?
+
+anchors: 4
+  # - [10,13, 16,30, 33,23]  # P3/8
+  # - [30,61, 62,45, 59,119]  # P4/16
+  # - [116,90, 156,198, 373,326]  # P5/32
+
+# YOLOv5 v6.0 backbone
+backbone:
+  # [from, number, module, args]
+  # from锛氳〃绀哄綋鍓嶆ā鍧楃殑杈撳叆鏉ヨ嚜鍝竴灞傜殑杈撳嚭锛屽拰darknet閲岄潰涓€鑷达紝-1琛ㄧず鏉ヨ嚜涓婁竴灞傜殑杈撳嚭锛?
+  # number锛氳〃绀烘湰妯″潡閲嶅鐨勬鏁帮紝1琛ㄧず鍙湁涓€涓紝3琛ㄧず閲嶅3娆★紝9琛ㄧず閲嶅9娆★紱褰撴ā鍧椾负 C3 鎴?BottleneckCSP 鏃讹紝浣滀负鍐呴儴鐨?Bottleneck 鏁伴噺浼犲叆
+  # module: 妯″潡鍚嶇О锛?
+  # args: 琛ㄧず杈撳叆鍙傛暟锛屾瘮濡傚嵎绉牳涓暟 鍗风Н鏍稿ぇ灏?姝ラ暱stride绛夛紱
+  [[-1, 1, Conv, [64, 6, 2, 2]],  # 0-P1/2
+   [-1, 1, Conv, [128, 3, 1]],  # 1
+   [-1, 1, space_to_depth, [1]],   # 2 -P2/4
+   [-1, 3, C3, [128]],          # 3
+   [-1, 1, Conv, [256, 3, 1]],  # 4
+   [-1, 1, space_to_depth, [1]],   # 5 -P3/8
+   [-1, 6, C3, [256]],          # 6
+   [-1, 1, Conv, [512, 3, 1]],  # 7-P4/16
+   [-1, 1, space_to_depth, [1]],   # 8 -P4/16
+   [-1, 9, C3, [512]],          # 9
+   [-1, 1, Conv, [1024, 3, 1]], # 10-P5/32
+   [-1, 1, space_to_depth, [1]],   # 11 -P5/32
+   [-1, 3, C3, [1024]],         # 12
+   [-1, 1, SPPF, [1024, 5]],  # 13
+  ]
+
+# YOLOv5 v6.0 head
+# 浣滆€呮病鏈夊尯鍒唍eck妯″潡锛屾墍浠ead閮ㄥ垎鍖呭惈浜哖ANet+Detect閮ㄥ垎
+# 鐢变簬鏈唤閰嶇疆鍏跺疄娌℃湁鍒唍eck妯″潡锛屾晠spp涔熷啓鍦ㄤ簡backbone閮ㄥ垎銆?
+head:
+  [[-1, 1, Conv, [512, 1, 1]],  # 14
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']], # 15
+   [[-1, 9], 1, Concat, [1]],  # 16 cat backbone P4
+   [-1, 3, C3, [512, False]],  # 17
+
+   [-1, 1, Conv, [256, 1, 1]],  # 18
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],  # 19
+   [[-1, 6], 1, Concat, [1]],  # 20 cat backbone P3
+   [-1, 3, C3, [256, False]],  # 21 (P3/8-small)
+
+   [-1, 1, Conv, [128, 1, 1]],  # 22
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],  # 23
+   [[-1, 3], 1, Concat, [1]],  # 24 cat backbone P2
+   [-1, 2, C3HB, [128, False]],  # 25 (P2/4-xsmall)
+
+   [-1, 1, Conv, [128, 3, 1]],  # 26
+   [-1, 1, space_to_depth, [1]],   # 27
+   [[-1, 22, 6], 1, Concat, [1]],  # 28 cat head P3
+   [-1, 2, C3HB, [256, False]],  # 29 (P3/8-small)
+
+   [-1, 1, Conv, [256, 3, 1]],  # 30
+   [-1, 1, space_to_depth, [1]],   # 31
+   [[-1, 18, 9], 1, Concat, [1]],  # 32 cat head P4
+   [-1, 2, C3HB, [512, False]],  # 33 (P4/16-medium)
+
+   [-1, 1, Conv, [512, 3, 1]],  # 34
+   [-1, 1, space_to_depth, [1]],   # 35
+   [[-1, 14], 1, Concat, [1]],  # 36 cat head P5
+   [-1, 2, C3HB, [1024, False]],  # 37 (P5/32-large)
+
+   [[25, 29, 33, 37], 1, Detect, [nc, anchors]],  # 35 Detect(P3, P4, P5)
+  ]

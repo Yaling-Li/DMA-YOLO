@@ -1,0 +1,116 @@
+"""
+generate one txt label for each image, put all txts in one folder ('../../dataset/labels/all')
+"""
+
+import os
+
+old_dir = "/data/lg/UAV-benchmark-MOTD_v1.0/GT/"
+train_dir = "/data/lg/UAVDT/train/labels/"
+val_dir = "/data/lg/UAVDT/val/labels/"
+
+if not os.path.exists(train_dir):
+    os.makedirs(train_dir)
+
+if not os.path.exists(val_dir):
+    os.makedirs(val_dir)
+
+IMG_W = 1024
+IMG_H = 540
+val_folds = ['M0203', 'M0205', 'M0208', 'M0209', 'M0403', 'M0601', 'M0602', 'M0606', 'M0701', 'M0801', 'M0802',
+              'M1001', 'M1004', 'M1007', 'M1009', 'M1101', 'M1301', 'M1302', 'M1303', 'M1401']
+
+video_label_txts = os.listdir(old_dir)
+
+for each_txt in video_label_txts:    # 'M1006_gt_whole.txt'
+    if each_txt[-9:] == 'whole.txt':
+        video_name = each_txt[:5]    # 'M1006'
+        txt_path = old_dir + '/' + each_txt    # '../../UAV-benchmark-MOTD_v1.0/GT/M1006_gt_whole.txt'
+        if video_name in val_folds:
+            # read txt
+            with open(txt_path, 'r') as file:
+                lines = file.readlines()
+                for line in lines:
+                    line_ls = line.split(',')    # ['1089', '20', '461', '207', '21', '31', '1', '1']
+                    img_num = line_ls[0]    # '1089'
+                    img_six_num = (6-len(img_num))*'0' + str(img_num)    # '001089'
+
+                    # transform [x1, y1, w, h] to [xc, yc, w, h]
+                    org_xc = int(line_ls[2]) + int(line_ls[4])/2
+                    org_yc = int(line_ls[3]) + int(line_ls[5])/2
+                    org_w = int(line_ls[4])
+                    org_h = int(line_ls[5])
+
+                    # convert coordinates scale from image size to [0, 1]
+                    xc = float(org_xc / IMG_W)
+                    yc = float(org_yc / IMG_H)
+                    w = float(org_w / IMG_W)
+                    h = float(org_h / IMG_H)
+
+                    if xc>1:
+                        print('oh no!!! xc ', xc)
+                    if yc>1:
+                        print('oh no!!! yc ', yc)
+                    if w>1:
+                        print('oh no!!! w ', w)
+                    if h>1:
+                        print('oh no!!! h ', h)
+
+                    # remove wrong labels (there are some wrongly annotated bbox, most of them are very big)
+                    wrong_label = False
+                    if org_w > (IMG_W / 6):
+                        if org_h > (IMG_H / 6):
+                            wrong_label = True
+
+                    # write bbox into new txt (one image corresponds to one txt label)
+                    if not wrong_label:
+                        new_txt_path = val_dir + '/' + video_name + '_' + img_six_num + '.txt'
+                        with open(new_txt_path, 'a') as wr:
+                            label = str(int(line_ls[8].replace('\n', ''))-1)
+                            bbox = label + ' ' + str(xc) + ' ' + str(yc) + ' ' + str(w) + ' ' + str(h) + '\n'
+                            wr.writelines(bbox)
+        else:
+            # read txt
+            with open(txt_path, 'r') as file:
+                lines = file.readlines()
+                for line in lines:
+                    line_ls = line.split(',')    # ['1089', '20', '461', '207', '21', '31', '1', '1']
+                    img_num = line_ls[0]    # '1089'
+                    img_six_num = (6-len(img_num))*'0' + str(img_num)    # '001089'
+
+                    # transform [x1, y1, w, h] to [xc, yc, w, h]
+                    org_xc = int(line_ls[2]) + int(line_ls[4])/2
+                    org_yc = int(line_ls[3]) + int(line_ls[5])/2
+                    org_w = int(line_ls[4])
+                    org_h = int(line_ls[5])
+
+                    # convert coordinates scale from image size to [0, 1]
+                    xc = float(org_xc / IMG_W)
+                    yc = float(org_yc / IMG_H)
+                    w = float(org_w / IMG_W)
+                    h = float(org_h / IMG_H)
+
+                    if xc>1:
+                        print('oh no!!! xc ', xc)
+                    if yc>1:
+                        print('oh no!!! yc ', yc)
+                    if w>1:
+                        print('oh no!!! w ', w)
+                    if h>1:
+                        print('oh no!!! h ', h)
+
+                    # remove wrong labels (there are some wrongly annotated bbox, most of them are very big)
+                    wrong_label = False
+                    if org_w > (IMG_W / 6):
+                        if org_h > (IMG_H / 6):
+                            wrong_label = True
+
+                    # write bbox into new txt (one image corresponds to one txt label)
+                    if not wrong_label:
+                        new_txt_path = train_dir + '/' + video_name + '_' + img_six_num + '.txt'
+                        with open(new_txt_path, 'a') as wr:
+                            label = str(int(line_ls[8].replace('\n', ''))-1)
+                            bbox = label + ' ' + str(xc) + ' ' + str(yc) + ' ' + str(w) + ' ' + str(h) + '\n'
+                            wr.writelines(bbox)
+
+        print(each_txt, ' has been parsed')
+print('all txt labels have been saved ')
